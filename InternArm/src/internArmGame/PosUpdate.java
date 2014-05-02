@@ -22,6 +22,8 @@ public class PosUpdate implements ITaskSpaceUpdateListenerNR, IJointSpaceUpdateL
 	private float[] X = new float[6];
 	private float[] Y = new float[6] ;
 	private float[] Z = new float[6];
+	private double[][] temprotMatrix = new double[6][4];
+	private float[][] rotMatrix = new float[6][4];
 	public PosUpdate(){
 		Master = new DyIO();
 		DyIO.disableFWCheck();
@@ -57,17 +59,17 @@ public class PosUpdate implements ITaskSpaceUpdateListenerNR, IJointSpaceUpdateL
 		System.out.println("Chain ");
 		int i=0;
 		for(TransformNR nr:model.getChainTransformations()){
-				float tempx = (float)nr.getX();
-				float tempy = (float)nr.getY();
-				float tempz = (float)nr.getZ();
-				X[i] = tempx;
-				Y[i] = tempy;
-				Z[i] = tempz;
-//				float that = (float) nr.getX();
-//				float that2 = (float)nr.getY();
-//				float that3 = (float)nr.getZ();
-//			System.out.println(" link # "+(i)+" \n"+nr.getRotation()+" \n"+that+" \n"+that2+" \n"+that3);
-			System.out.println(" link # "+(i)+" \n"+nr.getRotation()+" \n"+X[i]+" \n"+Y[i]+" \n"+Z[i]);
+				X[i]  = (float)nr.getX();
+				Y[i] = (float)nr.getY();
+				Z[i] = (float)nr.getZ();
+				rotMatrix[i][0]= (float)nr.getRotation().getRotationMatrix2QuaturnionW();
+				rotMatrix[i][1]= (float)nr.getRotation().getRotationMatrix2QuaturnionX();
+				rotMatrix[i][2]= (float)nr.getRotation().getRotationMatrix2QuaturnionY();
+				rotMatrix[i][3]= (float)nr.getRotation().getRotationMatrix2QuaturnionZ();
+
+			System.out.println(" link # "+(i)+" "
+					+ "\n w="+rotMatrix[i][0]+" \t x="+rotMatrix[i][1]+" \t y="+rotMatrix[0][2]+" \tz="+temprotMatrix[i][3]+" \n"
+					+X[i]+" \n"+Y[i]+" \n"+Z[i]);
 			i++;
 			
 		}
@@ -102,7 +104,9 @@ public class PosUpdate implements ITaskSpaceUpdateListenerNR, IJointSpaceUpdateL
 		return Y;
 	}
 	public float[] getZPos(){
-	
 		return Z;
-}
+	}
+	public float[][] getrotMatrix(){
+		return rotMatrix;
+	}
 }
