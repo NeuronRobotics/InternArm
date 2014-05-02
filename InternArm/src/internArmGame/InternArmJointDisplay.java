@@ -84,10 +84,10 @@ Quaternion q6 = new Quaternion();
 		
 		q1.set(rotations[0][1],rotations[0][2],rotations[0][3],rotations[0][0]);
 		q2.set(rotations[1][1],rotations[1][2],rotations[1][3],rotations[1][0]);
-		q3.set(rotations[1][1],rotations[1][2],rotations[1][3],rotations[1][0]);
-		q4.set(rotations[1][1],rotations[1][2],rotations[1][3],rotations[1][0]);
-		q5.set(rotations[1][1],rotations[1][2],rotations[1][3],rotations[1][0]);
-		q6.set(rotations[1][1],rotations[1][2],rotations[1][3],rotations[1][0]);
+		q3.set(rotations[2][1],rotations[2][2],rotations[2][3],rotations[2][0]);
+		q4.set(rotations[3][1],rotations[3][2],rotations[3][3],rotations[3][0]);
+		q5.set(rotations[4][1],rotations[4][2],rotations[4][3],rotations[4][0]);
+		q6.set(rotations[5][1],rotations[5][2],rotations[5][3],rotations[5][0]);
 		NJoint1.setLocalTranslation((x[0]/10),(y[0]/10),(z[0]/10));		
 		NJoint2.setLocalTranslation((x[1]/10),(y[1]/10),(z[1]/10));		
 		NJoint3.setLocalTranslation((x[2]/10),(y[2]/10),(z[2]/10));		
