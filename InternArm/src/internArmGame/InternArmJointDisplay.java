@@ -54,6 +54,7 @@ public class InternArmJointDisplay extends SimpleApplication{
   public void simpleInitApp() {
 	
     initArm();
+    initKeys();
    // initFloor();
     /** Configure cam to look at scene */
     cam.setLocation(new Vector3f(0, 4f, 16f));
@@ -62,21 +63,20 @@ public class InternArmJointDisplay extends SimpleApplication{
    
   }
   PosUpdate Updater = new PosUpdate();
-  float x[];
-  float y[];
-  float z[];
-  float rotations[][];
+  private float x[];
+  private float y[];
+  private float z[];
+  private float rotations[][];
+  
   Quaternion q1 = new Quaternion();
   Quaternion q2 = new Quaternion();
   Quaternion q3 = new Quaternion();
-Quaternion q4 = new Quaternion();
-Quaternion q5 = new Quaternion();
-Quaternion q6 = new Quaternion();
-  boolean go = true;
-  Timer myTimer = getTimer();
+  Quaternion q4 = new Quaternion();
+  Quaternion q5 = new Quaternion();
+  Quaternion q6 = new Quaternion();
+
   @Override
-  public void simpleUpdate(float tpf) {
-	  
+  public void simpleUpdate(float tpf) { 
 	  	x = Updater.getXPos();
 	  	y = Updater.getYPos();
 		z = Updater.getZPos();
@@ -88,6 +88,7 @@ Quaternion q6 = new Quaternion();
 		q4.set(rotations[3][1],rotations[3][2],rotations[3][3],rotations[3][0]);
 		q5.set(rotations[4][1],rotations[4][2],rotations[4][3],rotations[4][0]);
 		q6.set(rotations[5][1],rotations[5][2],rotations[5][3],rotations[5][0]);
+		
 		NJoint1.setLocalTranslation((x[0]/10),(y[0]/10),(z[0]/10));		
 		NJoint2.setLocalTranslation((x[1]/10),(y[1]/10),(z[1]/10));		
 		NJoint3.setLocalTranslation((x[2]/10),(y[2]/10),(z[2]/10));		
@@ -101,8 +102,22 @@ Quaternion q6 = new Quaternion();
 		NJoint4.setLocalRotation(q4);
 		NJoint5.setLocalRotation(q5);
 		NJoint6.setLocalRotation(q6);
+		if(isRunning){
+			drawDot(NJoint6.getLocalTranslation(),q6);
+		}
 }
-
+  private void initKeys() {
+	    inputManager.addMapping("Draw",  new KeyTrigger(KeyInput.KEY_P));
+	    inputManager.addListener(actionListener,"Draw");
+  }
+  
+  private ActionListener actionListener = new ActionListener() {
+	    public void onAction(String name, boolean keyPressed, float tpf) {
+	      if (name.equals("Draw") && !keyPressed) {
+	        isRunning = !isRunning;
+	      }
+	    }
+	  };
   public void initFloor(){
     Box floor = new Box(10f, 0.1f, 5f);
     Geometry floor_geo = new Geometry("Floor", floor);
@@ -188,40 +203,51 @@ Quaternion q6 = new Quaternion();
 //    NBase.setLocalRotation( roll90 );
 //    roll90.fromAngleAxis( -FastMath.PI/2 , new Vector3f(0,0,1) ); 
 //    NBase.setLocalRotation( roll90 );
-    attachCoordinateAxes(new Vector3f(0f,0f,0f),rootNode);
-    attachCoordinateAxes(new Vector3f(0f,0f,0f),NBase);
-    attachCoordinateAxes(new Vector3f(0f,0f,0f),NJoint1);
-    attachCoordinateAxes(new Vector3f(0f,0f,0f),NJoint2);
-    attachCoordinateAxes(new Vector3f(0f,0f,0f),NJoint3);
-    attachCoordinateAxes(new Vector3f(0f,0f,0f),NJoint4);
-    attachCoordinateAxes(new Vector3f(0f,0f,0f),NJoint5);
-    attachCoordinateAxes(new Vector3f(0f,0f,0f),NJoint6);
+//    attachCoordinateAxes(new Vector3f(0f,0f,0f),rootNode);
+//    attachCoordinateAxes(new Vector3f(0f,0f,0f),NBase);
+//    attachCoordinateAxes(new Vector3f(0f,0f,0f),NJoint1);
+//    attachCoordinateAxes(new Vector3f(0f,0f,0f),NJoint2);
+//    attachCoordinateAxes(new Vector3f(0f,0f,0f),NJoint3);
+//    attachCoordinateAxes(new Vector3f(0f,0f,0f),NJoint4);
+//    attachCoordinateAxes(new Vector3f(0f,0f,0f),NJoint5);
+//    attachCoordinateAxes(new Vector3f(0f,0f,0f),NJoint6);
     
   }
+ 
+  private void drawDot(Vector3f pos, Quaternion rot){
+	  Sphere pixel = new Sphere(12,12,.5f);
+	    Geometry DOT = new Geometry("Pixel", pixel);
+	    Material PixelColor = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+	    PixelColor.setColor("Color", ColorRGBA.Red);
+	    DOT.setMaterial(PixelColor);
+	    NBase.attachChild(DOT);
+	    DOT.setLocalTranslation(pos);
+	    DOT.setLocalRotation(rot);
+  }
 
-private void attachCoordinateAxes(Vector3f pos, Node node) {
-	  Arrow arrow = new Arrow(Vector3f.UNIT_X);
-	  arrow.setLineWidth(12f); // make arrow thicker
-	  putShape(arrow, ColorRGBA.Red, node).setLocalTranslation(pos);
-	 
-	  arrow = new Arrow(Vector3f.UNIT_Y);
-	  arrow.setLineWidth(12f); // make arrow thicker
-	  putShape(arrow, ColorRGBA.Green, node).setLocalTranslation(pos);
-	 
-	  arrow = new Arrow(Vector3f.UNIT_Z);
-	  arrow.setLineWidth(12f); // make arrow thicker
-	  putShape(arrow, ColorRGBA.Blue, node).setLocalTranslation(pos);
-	}
-	 
-	private Geometry putShape(Mesh shape, ColorRGBA color, Node node){
-	  Geometry g = new Geometry("coordinate axis", shape);
-	  Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-	  mat.getAdditionalRenderState().setWireframe(true);
-	  mat.setColor("Color", color);
-	  g.setMaterial(mat);
-	  node.attachChild(g);
-	  return g;
-	}
+//private void attachCoordinateAxes(Vector3f pos, Node node) {
+//	  Arrow arrow = new Arrow(Vector3f.UNIT_X);
+//	  arrow.setLineWidth(12f); // make arrow thicker
+//	  putShape(arrow, ColorRGBA.Red, node).setLocalTranslation(pos);
+//	 
+//	  arrow = new Arrow(Vector3f.UNIT_Y);
+//	  arrow.setLineWidth(12f); // make arrow thicker
+//	  putShape(arrow, ColorRGBA.Green, node).setLocalTranslation(pos);
+//	 
+//	  arrow = new Arrow(Vector3f.UNIT_Z);
+//	  arrow.setLineWidth(12f); // make arrow thicker
+//	  putShape(arrow, ColorRGBA.Blue, node).setLocalTranslation(pos);
+//	}
+//	 
+//	private Geometry putShape(Mesh shape, ColorRGBA color, Node node){
+//	  Geometry g = new Geometry("coordinate axis", shape);
+//	  Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+//	  mat.getAdditionalRenderState().setWireframe(true);
+//	  mat.setColor("Color", color);
+//	  g.setMaterial(mat);
+//	  node.attachChild(g);
+//	  return g;
+//	}
 } 
 
           

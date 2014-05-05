@@ -16,14 +16,11 @@ public class PosUpdate implements ITaskSpaceUpdateListenerNR, IJointSpaceUpdateL
 	
 	private DyIO Master;
 	private DHParameterKinematics model;
-//	private ArrayList<Float> xArray =new ArrayList<Float>();
-//	private ArrayList<Float> yArray =new ArrayList<Float>();
-//	private ArrayList<Float> zArray =new ArrayList<Float>();
 	private float[] X = new float[6];
 	private float[] Y = new float[6] ;
 	private float[] Z = new float[6];
-	private double[][] temprotMatrix = new double[6][4];
 	private float[][] rotMatrix = new float[6][4];
+	
 	public PosUpdate(){
 		Master = new DyIO();
 		DyIO.disableFWCheck();
@@ -55,7 +52,6 @@ public class PosUpdate implements ITaskSpaceUpdateListenerNR, IJointSpaceUpdateL
 
 	public void onTaskSpaceUpdate(AbstractKinematicsNR arg0, TransformNR arg1) {
 		// TODO Auto-generated method stub
-		//System.out.println("New transform: " + arg1);
 		System.out.println("Chain ");
 		int i=0;
 		for(TransformNR nr:model.getChainTransformations()){
@@ -68,8 +64,8 @@ public class PosUpdate implements ITaskSpaceUpdateListenerNR, IJointSpaceUpdateL
 				rotMatrix[i][3]= (float)nr.getRotation().getRotationMatrix2QuaturnionZ();
 
 			System.out.println(" link # "+(i)+" "
-					+ "\n w="+rotMatrix[i][0]+" \t x="+rotMatrix[i][1]+" \t y="+rotMatrix[0][2]+" \tz="+temprotMatrix[i][3]+" \n"
-					+X[i]+" \n"+Y[i]+" \n"+Z[i]);
+					+ "\nRotation: w="+rotMatrix[i][0]+" \t x="+rotMatrix[i][1]+" \t y="+rotMatrix[i][2]+" \t z="+rotMatrix[i][3]+" \n Position : X="
+					+X[i]+" \n Y = "+Y[i]+" \n Z = "+Z[i]);
 			i++;
 			
 		}
