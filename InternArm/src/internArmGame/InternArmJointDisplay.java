@@ -49,6 +49,8 @@ public class InternArmJointDisplay extends SimpleApplication{
   protected Node NJoint5;
   protected Node NJoint6;
   
+  protected Node NGrid;
+  
   
   boolean isRunning = true;
  
@@ -57,6 +59,8 @@ public class InternArmJointDisplay extends SimpleApplication{
 	
     initArm();
     initKeys();
+    NGrid = new Node("artBoard");
+    rootNode.attachChild(NGrid);
    // initFloor();
     /** Configure cam to look at scene */
     cam.setLocation(new Vector3f(0, 4f, 16f));
@@ -107,13 +111,14 @@ public class InternArmJointDisplay extends SimpleApplication{
 		if(isRunning){
 			CollisionResults results = new CollisionResults();
 			Ray ray = new Ray(NJoint6.getWorldTranslation(), Vector3f.UNIT_Y);
-	        //NGrid.collideWith(ray, results);
-	        if(results.size() > 0)
+	        NGrid.collideWith(ray, results);
+	        if(results.size() < 1)
 	        {
-		        Geometry geom = results.getClosestCollision().getGeometry();
-		        Material mat = geom.getMaterial();
-		       // mat.setColor("Color", visable);
-		        geom.setMaterial(mat);
+//		        Geometry geom = results.getClosestCollision().getGeometry();
+//		        Material mat = geom.getMaterial();
+//		       // mat.setColor("Color", visable);
+//		        geom.setMaterial(mat);
+	        	drawDot(NJoint6.getWorldTranslation(),NJoint6.getWorldRotation());
 	        }
 		}
 }
@@ -147,7 +152,7 @@ public class InternArmJointDisplay extends SimpleApplication{
 		  }
   public void initArm(){
 	  Box base = new Box(.1f, .1f, .1f); 
-		Sphere b1 = new Sphere(6,6,.1f);
+		Sphere b1 = new Sphere(6,6,.01f);
 		Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
 		mat.setColor("Color", ColorRGBA.Blue);
 		
@@ -209,12 +214,12 @@ public class InternArmJointDisplay extends SimpleApplication{
   }
  
   private void drawDot(Vector3f pos, Quaternion rot){
-	  Sphere pixel = new Sphere(12,12,.5f);
+	  Sphere pixel = new Sphere(12,12,.1f);
 	    Geometry DOT = new Geometry("Pixel", pixel);
 	    Material PixelColor = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
 	    PixelColor.setColor("Color", ColorRGBA.Red);
 	    DOT.setMaterial(PixelColor);
-	    NBase.attachChild(DOT);
+	    NGrid.attachChild(DOT);
 	    DOT.setLocalTranslation(pos);
 	    DOT.setLocalRotation(rot);
   }
