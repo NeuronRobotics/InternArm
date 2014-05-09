@@ -1,11 +1,19 @@
 package internArmGame;
  
 import com.jme3.app.SimpleApplication;
+import com.jme3.asset.TextureKey;
+import com.jme3.bounding.BoundingBox;
+import com.jme3.bounding.BoundingSphere;
+import com.jme3.bounding.BoundingVolume;
 import com.jme3.collision.CollisionResults;
 import com.jme3.material.Material;
 import com.jme3.material.RenderState.BlendMode;
 import com.jme3.renderer.queue.RenderQueue.Bucket;
+import com.jme3.scene.CameraNode;
 import com.jme3.scene.Geometry;
+import com.jme3.scene.Mesh;
+import com.jme3.scene.debug.Arrow;
+import com.jme3.scene.debug.WireBox;
 import com.jme3.scene.shape.Box;
 import com.jme3.scene.shape.Sphere;
 import com.jme3.math.ColorRGBA;
@@ -13,9 +21,11 @@ import com.jme3.math.FastMath;
 import com.jme3.math.Ray;
 import com.jme3.input.KeyInput;
 import com.jme3.input.controls.ActionListener;
+import com.jme3.input.controls.AnalogListener;
 import com.jme3.input.controls.KeyTrigger;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Node;
+import com.jme3.texture.Texture;
 import com.jme3.math.Quaternion;
 
 
@@ -45,21 +55,24 @@ public class HighlightGrid extends SimpleApplication{
   protected Node NJoint5;
   protected Node NJoint6;
   
+  protected Node camPivot;
+  protected CameraNode camLoc;
+  
   boolean isRunning = true;
   
   //Grid size definition
   private Node NGrid;
   
-  private static final float brickLength = .1f;
+  private static final float brickDepth = .1f;
   private static final float brickWidth  = .1f;
   private static final float brickHeight = .1f;
   private static final Box    box;
   private static final ColorRGBA visable;
   private static final ColorRGBA invisable;
   static{
-	  box = new Box(brickLength, brickHeight, brickWidth);
-	  visable = new ColorRGBA(1,0,0,1.0f);
-	  invisable = new ColorRGBA(1,0,0,0.1f);
+	  box = new Box(brickWidth, brickHeight, brickDepth);
+	  visable = new ColorRGBA(1,0,0,0.7f);
+	  invisable = new ColorRGBA(1,0,0,0.0f);
   }
   
   @Override
@@ -67,13 +80,22 @@ public class HighlightGrid extends SimpleApplication{
 	NGrid = new Node("Shootables");
 	rootNode.attachChild(NGrid);
 	isRunning = false;
+	cam.lookAt(new Vector3f(0, 0, 0), Vector3f.UNIT_Y);
+//	camPivot = new Node("pivot");
+//	camLoc = new CameraNode("Camera",cam);
+//	camLoc.setLocalTranslation(10f,10f,10f);
+//	camPivot.setLocalTranslation(0f,0f,0f);
+//	rootNode.attachChild(camPivot);
+//	camPivot.attachChild(camLoc);
+	
     initArm();
     initKeys();
     initGrid();
+    initFloor();
+    viewPort.setBackgroundColor(ColorRGBA.Blue);
     /** Configure cam to look at scene */
-    cam.setLocation(new Vector3f(0, 4f, 16f));
-    cam.lookAt(new Vector3f(2, 2, 0), Vector3f.UNIT_Y);
     flyCam.setMoveSpeed(10);
+
  
   }
   PosUpdate Updater = new PosUpdate();
@@ -119,58 +141,124 @@ public class HighlightGrid extends SimpleApplication{
 		if(isRunning){
 			CollisionResults results = new CollisionResults();
 			Ray ray = new Ray(NJoint6.getWorldTranslation(), Vector3f.UNIT_Y);
+			BoundingVolume bound = Joint6.getWorldBound();
+//			NGrid.getWorldBound().collideWith(bound,results);
 	        NGrid.collideWith(ray, results);
 	        if(results.size() > 0)
 	        {
-		        Geometry geom = results.getClosestCollision().getGeometry();
-		        Material mat = geom.getMaterial();
-		        mat.setColor("Color", visable);
-		        geom.setMaterial(mat);
+//	    	    Geometry brick_geo = new Geometry("brick", box);
+//	    	    Material wall_mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+//	    	    wall_mat.setColor("Color", invisable);
+//	    	    wall_mat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);;
+//	    	    brick_geo.setQueueBucket(Bucket.Transparent);
+//	    	    brick_geo.setMaterial(wall_mat);
+	        	Geometry spot = results.getClosestCollision().getGeometry();
+	    	    Material wall_mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+	    	    wall_mat.setColor("Color", visable);
+	    	    wall_mat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);;
+	    	    spot.setQueueBucket(Bucket.Transparent);
+	    	    spot.setMaterial(wall_mat);
 	        }
 		}
 }
   private void initKeys() {
 	    inputManager.addMapping("Draw",  new KeyTrigger(KeyInput.KEY_P));
+	    inputManager.addMapping("RotateRight", new KeyTrigger(KeyInput.KEY_D));
+	    inputManager.addMapping("RotateLeft", new KeyTrigger(KeyInput.KEY_A));
+	    inputManager.addMapping("ZoomIn", new KeyTrigger(KeyInput.KEY_W));
+	    inputManager.addMapping("ZoomOut", new KeyTrigger(KeyInput.KEY_S));
+	    inputManager.addMapping("RotateUp", new KeyTrigger(KeyInput.KEY_Q));
+	    inputManager.addMapping("RotateDown", new KeyTrigger(KeyInput.KEY_Z));
 	    inputManager.addListener(actionListener,"Draw");
+	    inputManager.addListener(analogListener, "RotateRight","RotateLeft","RotateUp","RotateDown");
   }
   
   private ActionListener actionListener = new ActionListener() {
 	    public void onAction(String name, boolean keyPressed, float tpf) {
-	      if (name.equals("Draw") && !keyPressed) {
-	        isRunning = !isRunning;
-	      }
-	    }
-	  };
-  public void initGrid(){
-	  
-	  float startpt = 0 - (brickLength * 20);
-	    float height = 0 - (brickHeight * 6);
-	    float width = 0 - (brickWidth * 16);
-	    for (int k = 0; k <20; k++){
-		    for (int j = 0; j < 16; j++) {
-		      for (int i = 0; i < 26; i++) {
-		        Vector3f vt =
-		         new Vector3f(i * brickLength * 2 + startpt, brickHeight + height, width);
-		        makeBrick(vt);
+	    	if (name.equals("Draw") && !keyPressed) {
+		        isRunning = false;
 		      }
-		      height += 2 * brickHeight;  
-		    }
-		    height = 0 - (brickHeight * 3);;
-		    width += 2* brickWidth;
+	    	if (name.equals("Draw") && keyPressed) {
+		        isRunning = true;
+		      }
 	    }
+  };
+private AnalogListener analogListener = new AnalogListener(){
+	public void onAnalog(String name, float value, float tpf){
+		if (name.equals("RotateRight")) {
+//	          camPivot.rotate(0f, value*speed, 0f);
+			cam.lookAt(new Vector3f(0, 0, 0), Vector3f.UNIT_Y);
+	        }
+		if (name.equals("RotateLeft")) {
+//			camPivot.rotate(0f, -value*speed, 0f);
+			cam.lookAt(new Vector3f(0, 0, 0), Vector3f.UNIT_Y);
+	        }
+		if (name.equals("RotateUp")) {
+//			camPivot.rotate(value*speed, 0f, 0f);
+			cam.lookAt(new Vector3f(0, 0, 0), Vector3f.UNIT_Y);
+	        }
+		if (name.equals("RotateDown")) {
+//			camPivot.rotate(-value*speed, 0f, 0f);
+			cam.lookAt(new Vector3f(0, 0, 0), Vector3f.UNIT_Y);
+			}
+		if (name.equals("RotateUp")) {
+//				camPivot.rotate(value*speed, 0f, 0f);
+			cam.lookAt(new Vector3f(0, 0, 0), Vector3f.UNIT_Y);
+	        }
+		if (name.equals("RotateDown")) {
+//				camPivot.rotate(-value*speed, 0f, 0f);
+			cam.lookAt(new Vector3f(0, 0, 0), Vector3f.UNIT_Y);
+        }
+}
+};
+	 
+  public void initGrid(){
+	  float startWidth = 0 - 2.6f;//Start 13 Bricks Left of 0 point (brickWidth * 26)
+	  float startHeight = 0 - 1.2f;//Start 6 Bricks below 0 point (brickHeight * 12)
+	  float startDepth = 0 - 2.2f;//Start 11 Bricks Behind 0 point (brickDepth * 22)
+	  float height = startHeight;
+	  float depth = startDepth;
+	    for (int k = 0; k <26; k++)//26 Bricks Deep
+		    {
+			    for (int j = 0; j < 20; j++) //20 Bricks Tall
+				    {
+				      for (int i = 0; i < 19; i++) //19 Bricks Wide
+					      {
+					        Vector3f vt =
+					        new Vector3f(i * brickWidth * 2 + startWidth, brickHeight + height, depth);
+					        makeBrick(vt);
+					      }
+				      height += 2 * brickHeight;  
+				    }
+			    height = startHeight;
+			    depth += 2* brickDepth;
+		    }
   }
+  public void initFloor(){
+	    Box floor = new Box(1.9f, 0.1f, 2.6f);
+	    Geometry floor_geo = new Geometry("Floor", floor);
+	    Material floor_mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+	    TextureKey key3 = new TextureKey("Textures/Terrain/Pond/Pond.jpg");
+	    key3.setGenerateMips(true);
+	    Texture tex3 = assetManager.loadTexture(key3);
+	    tex3.setWrap(Texture.WrapMode.Repeat);
+	    floor_mat.setTexture("ColorMap", tex3);
+	    floor_geo.setMaterial(floor_mat);
+	    floor_geo.setLocalTranslation(-.8f, -1.3f, .3f);
+	    rootNode.attachChild(floor_geo);
+	  }
   public void initArm(){
 	Box base = new Box(.1f, .1f, .1f); 
-	Sphere b1 = new Sphere(3,3,.1f);
+	Sphere b1 = new Sphere(6,6,.01f);
 	Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-	mat.setColor("Color", ColorRGBA.Blue);
+	mat.setColor("Color", ColorRGBA.Black);
 	
 	NBase = new Node("pivot");
     Base = new Geometry("Base", base);
     Base.setMaterial(mat);
     rootNode.attachChild(NBase);
     NBase.attachChild(Base);
-//
+
 //    NJoint1 = new Node("pivot");
 //    Joint1 = new Geometry("Joint1", b1);
 //    Joint1.setMaterial(mat);
@@ -200,16 +288,21 @@ public class HighlightGrid extends SimpleApplication{
 //    Joint5.setMaterial(mat);
 //    NBase.attachChild(NJoint5);
 //    NJoint5.attachChild(Joint5);
-//    
+    
     NJoint6 = new Node("pivot");
     Joint6 = new Geometry("Joint6", b1);
     Joint6.setMaterial(mat);
+    Joint6.setModelBound(new BoundingBox());
+    Joint6.updateModelBound();
     NBase.attachChild(NJoint6);
     NJoint6.attachChild(Joint6);
 
     Quaternion roll90 = new Quaternion(); 
     roll90.fromAngleAxis( -FastMath.PI/2 , new Vector3f(1,0,0) ); 
     NBase.setLocalRotation( roll90 );   
+  }
+  public void initWalls(){
+	  
   }
  
   public void makeBrick(Vector3f loc) {
@@ -220,9 +313,19 @@ public class HighlightGrid extends SimpleApplication{
 	    wall_mat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);;
 	    brick_geo.setQueueBucket(Bucket.Transparent);
 	    brick_geo.setMaterial(wall_mat);
-	    NGrid.attachChild(brick_geo);
-	    /** Position the brick geometry  */
-	    brick_geo.setLocalTranslation(loc);
+		brick_geo.setLocalTranslation(loc);
+		NGrid.attachChild(brick_geo);
+//	  	Node GridDot = new Node("GridDot");
+//	  	Sphere b1 = new Sphere(3,3,.1f);
+//	  	Geometry brick_geo = new Geometry("brick", b1);
+//	  	Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+//		mat.setColor("Color", invisable);
+//		brick_geo.setQueueBucket(Bucket.Transparent);
+//	    brick_geo.setMaterial(mat);
+//	  	GridDot.setLocalTranslation(loc);
+//		NGrid.attachChild(GridDot);
+//		GridDot.attachChild(brick_geo);
+	  
 	  }
 
 } 
